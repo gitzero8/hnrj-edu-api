@@ -1,0 +1,45 @@
+{
+	"pages": [
+		{
+			"path": "pages/schedule/schedule",
+			"style": {
+				"navigationBarTitleText": "课表",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/grades/grades",
+			"style": {
+				"navigationBarTitleText": "成绩",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile/profile",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/login/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/profile-detail/profile-detail",
+			"style": {
+				"navigationBarTitleText": "个人信息详情",
+				"navigationStyle": "custom"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "white",
+		"navigationBarTitleText": "软大查查",
+		"navigationBarBackgroundColor": "#4A90D9",
+		"backgroundColor": "#F5F6FA"
+	}
+}

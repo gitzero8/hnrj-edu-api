@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>移动教务系统 - 后台管理</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+/* 登录页 */
+.login-wrap { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.login-box { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 380px; }
+.login-box h1 { text-align: center; font-size: 22px; margin-bottom: 8px; color: #333; }
+.login-box .sub { text-align: center; color: #999; font-size: 13px; margin-bottom: 30px; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #667eea; }
+.btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; transition: all 0.2s; text-align: center; }
+.btn-primary { background: #667eea; color: #fff; width: 100%; }
+.btn-primary:hover { background: #5568d3; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+.btn-edit { background: #e6f7ff; color: #1890ff; border: 1px solid #91d5ff; }
+.btn-edit:hover { background: #1890ff; color: #fff; }
+.btn-del { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffa39e; }
+.btn-del:hover { background: #ff4d4f; color: #fff; }
+.btn-add { background: #52c41a; color: #fff; }
+.btn-add:hover { background: #389e0d; }
+.btn-default { background: #fff; color: #666; border: 1px solid #ddd; }
+.btn-default:hover { background: #f5f5f5; }
+
+/* 主界面 */
+.main-wrap { display: none; }
+.header { background: #001529; color: #fff; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+.header .logo { font-size: 18px; font-weight: 600; }
+.header .user-info { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+.header .user-info .logout { cursor: pointer; color: #fff; opacity: 0.8; }
+.header .user-info .logout:hover { opacity: 1; }
+.sidebar { position: fixed; top: 56px; left: 0; bottom: 0; width: 200px; background: #001529; padding-top: 12px; }
+.sidebar .menu-item { padding: 12px 24px; color: rgba(255,255,255,0.65); cursor: pointer; font-size: 14px; transition: all 0.2s; border-left: 3px solid transparent; }
+.sidebar .menu-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.sidebar .menu-item.active { color: #fff; background: #667eea; border-left-color: #fff; }
+.content { margin-left: 200px; margin-top: 56px; padding: 24px; min-height: calc(100vh - 56px); }
+.page-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #333; }
+
+/* 统计卡片 */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.stat-card .label { font-size: 13px; color: #999; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 600; color: #333; }
+.stat-card.blue .value { color: #1890ff; }
+.stat-card.green .value { color: #52c41a; }
+.stat-card.orange .value { color: #fa8c16; }
+.stat-card.purple .value { color: #722ed1; }
+
+/* 图表区 */
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.chart-card h3 { font-size: 15px; margin-bottom: 16px; color: #333; }
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.bar-row .bar-label { width: 120px; text-align: right; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-row .bar-track { flex: 1; height: 20px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.bar-row .bar-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.5s; }
+.bar-row .bar-value { width: 40px; color: #333; font-weight: 600; }
+
+/* 表格 */
+.card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.toolbar .search-box { display: flex; gap: 8px; align-items: center; }
+.toolbar input, .toolbar select { padding: 7px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; outline: none; }
+.toolbar input:focus, .toolbar select:focus { border-color: #667eea; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table th { background: #fafafa; padding: 12px; text-align: left; font-weight: 600; color: #666; border-bottom: 1px solid #eee; white-space: nowrap; }
+table td { padding: 12px; border-bottom: 1px solid #f0f0f0; color: #333; }
+table tr:hover { background: #fafafa; }
+.table-wrap { overflow-x: auto; }
+.pagination { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; }
+.pagination button { padding: 5px 10px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.pagination button:hover:not(:disabled) { border-color: #667eea; color: #667eea; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination .page-info { color: #666; }
+
+/* 模态框 */
+.modal-mask { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+.modal-mask.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; width: 560px; max-height: 85vh; overflow-y: auto; }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 16px; }
+.modal-header .close { cursor: pointer; font-size: 20px; color: #999; }
+.modal-header .close:hover { color: #333; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row .form-group { margin-bottom: 14px; }
+
+/* 提示 */
+.toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 6px; color: #fff; font-size: 14px; z-index: 2000; display: none; }
+.toast.success { background: #52c41a; }
+.toast.error { background: #ff4d4f; }
+.toast.show { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+.empty { text-align: center; padding: 40px; color: #999; font-size: 14px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-blue { background: #e6f7ff; color: #1890ff; }
+.tag-green { background: #f6ffed; color: #52c41a; }
+.tag-orange { background: #fff7e6; color: #fa8c16; }
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <h1>移动教务系统</h1>
+    <div class="sub">后台管理平台</div>
+    <div class="form-group">
+      <label>用户名</label>
+      <input type="text" id="loginUsername" placeholder="请输入用户名" value="admin">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入密码" value="Admin@2026">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">登 录</button>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div class="main-wrap" id="mainWrap">
+  <div class="header">
+    <div class="logo">移动教务系统 - 后台管理</div>
+    <div class="user-info">
+      <span id="adminName">管理员</span>
+      <span class="logout" onclick="doLogout()">退出</span>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="menu-item active" data-page="dashboard" onclick="switchPage('dashboard')">仪表盘</div>
+    <div class="menu-item" data-page="users" onclick="switchPage('users')">用户管理</div>
+    <div class="menu-item" data-page="courses" onclick="switchPage('courses')">课程管理</div>
+    <div class="menu-item" data-page="grades" onclick="switchPage('grades')">成绩管理</div>
+    <div class="menu-item" data-page="semesters" onclick="switchPage('semesters')">学期管理</div>
+    <div class="menu-item" data-page="weeks" onclick="switchPage('weeks')">周次管理</div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+
+<!-- 模态框 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">编辑</h3>
+      <span class="close" onclick="closeModal()">&times;</span>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modalSaveBtn" onclick="saveModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 提示 -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/admin/api';
+let currentPage = 'dashboard';
+let pageState = { users: {page:1, keyword:''}, courses: {page:1, keyword:'', user_no:''}, grades: {page:1, keyword:'', semester:'', user_no:''} };
+let modalType = '';
+let modalEditId = null;
+let userMap = {}; // 学号 -> 姓名映射
+let userList = []; // 用户列表
+
+// 加载所有用户，建立映射
+function loadUsers() {
+  return api(API + '/users?page_size=1000').then(res => {
+    if (res.code === 1) {
+      userList = res.data.list;
+      userMap = {};
+      userList.forEach(u => { userMap[u.user_no] = u.name; });
+    }
+  }).catch(() => {});
+}
+
+// 生成学生下拉选项
+function userSelectOptions(selected='') {
+  let html = '<option value="">请选择学生</option>';
+  userList.forEach(u => {
+    const sel = u.user_no === selected ? 'selected' : '';
+    html += `<option value="${u.user_no}" ${sel}>${u.user_no} - ${u.name}</option>`;
+  });
+  return html;
+}
+
+// ========== 工具函数 ==========
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function api(url, options={}) {
+  return fetch(url, options).then(r => {
+    if (r.status === 401) {
+      document.getElementById('mainWrap').style.display = 'none';
+      document.getElementById('loginWrap').style.display = 'flex';
+      throw new Error('未登录');
+    }
+    return r.json();
+  });
+}
+
+function showModal(title, bodyHtml, type, editId=null) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  modalType = type;
+  modalEditId = editId;
+  document.getElementById('modalMask').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalMask').classList.remove('show');
+  modalType = '';
+  modalEditId = null;
+}
+
+function getFormData(containerId) {
+  const container = document.getElementById(containerId) || document;
+  const inputs = container.querySelectorAll('input, select, textarea');
+  const data = {};
+  inputs.forEach(inp => { if (inp.id) data[inp.id.replace('f_','')] = inp.value; });
+  return data;
+}
+
+// ========== 登录 ==========
+function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username || !password) { toast('请输入用户名和密码', 'error'); return; }
+  api(API + '/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username, password})
+  }).then(res => {
+    if (res.code === 1) {
+      document.getElementById('adminName').textContent = res.data.name || username;
+      document.getElementById('loginWrap').style.display = 'none';
+      document.getElementById('mainWrap').style.display = 'block';
+      loadUsers().then(() => switchPage('dashboard'));
+      toast('登录成功');
+    } else {
+      toast(res.msg || '登录失败', 'error');
+    }
+  }).catch(() => {});
+}
+
+function doLogout() {
+  api(API + '/logout', {method: 'POST'}).then(() => {
+    document.getElementById('mainWrap').style.display = 'none';
+    document.getElementById('loginWrap').style.display = 'flex';
+    toast('已退出登录');
+  }).catch(() => {});
+}
+
+// ========== 页面切换 ==========
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.toggle('active', m.dataset.page === page));
+  const renderers = {dashboard: renderDashboard, users: renderUsers, courses: renderCourses, grades: renderGrades, semesters: renderSemesters, weeks: renderWeeks};
+  if (renderers[page]) renderers[page]();
+}
+
+// ========== 仪表盘 ==========
+function renderDashboard() {
+  api(API + '/stats').then(res => {
+    if (res.code !== 1) return;
+    const d = res.data;
+    let html = '<div class="page-title">仪表盘</div>';
+    html += '<div class="stats-grid">';
+    html += `<div class="stat-card blue"><div class="label">用户总数</div><div class="value">${d.user_count}</div></div>`;
+    html += `<div class="stat-card green"><div class="label">课程总数</div><div class="value">${d.course_count}</div></div>`;
+    html += `<div class="stat-card orange"><div class="label">成绩记录</div><div class="value">${d.grade_count}</div></div>`;
+    html += `<div class="stat-card purple"><div class="label">学期数量</div><div class="value">${d.semester_count}</div></div>`;
+    html += '</div>';
+    html += '<div class="charts-grid">';
+    // 学院分布
+    html += '<div class="chart-card"><h3>各学院用户分布</h3><div class="bar-chart">';
+    const maxA = Math.max(...d.academy_stats.map(s => s.count), 1);
+    d.academy_stats.forEach(s => {
+      html += `<div class="bar-row"><span class="bar-label" title="${s.name}">${s.name}</span><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxA*100).toFixed(1)}%"></div></div><span class="bar-value">${s.count}</span></div>`;
+    });
+    html += '</div></div>';
+    // 学期成绩分布
+    html += '<div class="chart-card"><h3>各学期成绩记录数</h3><div class="bar-chart">';
+    const maxG = Math.max(...d.grade_by_semester.map(s => s.count), 1);
+    d.grade_by_semester.forEach(s => {
+      html += `<div class="bar-row"><span class="bar-label">${s.semester}</span><div class="bar-track"><div class="bar-fill" style="width:${(s.count/maxG*100).toFixed(1)}%;background:linear-gradient(90deg,#52c41a,#13c2c2)"></div></div><span class="bar-value">${s.count}</span></div>`;
+    });
+    html += '</div></div>';
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(() => {});
+}
+
+// ========== 用户管理 ==========
+function renderUsers() {
+  const s = pageState.users;
+  let url = API + `/users?page=${s.page}&page_size=15`;
+  if (s.keyword) url += '&keyword=' + encodeURIComponent(s.keyword);
+  api(url).then(res => {
+    if (res.code !== 1) return;
+    const d = res.data;
+    let html = '<div class="page-title">用户管理</div><div class="card">';
+    html += '<div class="toolbar"><div class="search-box">';
+    html += `<input type="text" placeholder="搜索学号/姓名/班级" value="${s.keyword}" id="userSearch" onkeydown="if(event.key==='Enter')searchUser()">`;
+    html += '<button class="btn btn-sm btn-default" onclick="searchUser()">搜索</button>';
+    html += '</div><button class="btn btn-sm btn-add" onclick="openUserModal()">+ 新增用户</button></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>学号</th><th>姓名</th><th>性别</th><th>学院</th><th>班级</th><th>专业</th><th>入学年份</th><th>用户类型</th><th>操作</th></tr></thead><tbody>';
+    if (d.list.length === 0) {
+      html += '<tr><td colspan="9" class="empty">暂无数据</td></tr>';
+    } else {
+      d.list.forEach(u => {
+        html += `<tr><td>${u.user_no}</td><td>${u.name}</td><td>${u.gender||'-'}</td><td>${u.academy_name||'-'}</td><td>${u.cls_name||'-'}</td><td>${u.major_name||'-'}</td><td>${u.entrance_year||'-'}</td><td><span class="tag ${u.user_type==='1'?'tag-orange':'tag-blue'}">${u.user_type==='1'?'教师':'学生'}</span></td>`;
+        html += `<td><button class="btn btn-sm btn-edit" onclick="openUserModal('${u.user_no}')">编辑</button> <button class="btn btn-sm btn-del" onclick="delUser('${u.user_no}')">删除</button></td></tr>`;
+      });
+    }
+    html += '</tbody></table></div>';
+    html += renderPagination(d.total, s.page, 15, 'users');
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(() => {});
+}
+
+function searchUser() {
+  pageState.users.keyword = document.getElementById('userSearch').value.trim();
+  pageState.users.page = 1;
+  renderUsers();
+}
+
+function openUserModal(userNo=null) {
+  let title = '新增用户';
+  let u = {};
+  if (userNo) {
+    title = '编辑用户';
+    // 从当前列表找数据
+    const rows = document.querySelectorAll('#content table tbody tr');
+    // 简单处理：用空表单，用户自己填
+  }
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学号 *</label><input id="f_user_no" value="${u.user_no||''}" ${userNo?'readonly':''}></div>
+    <div class="form-group"><label>密码 *</label><input id="f_password" value="${u.password||''}" type="text"></div>
+    <div class="form-group"><label>姓名</label><input id="f_name" value="${u.name||''}"></div>
+    <div class="form-group"><label>性别</label><select id="f_gender"><option value="">请选择</option><option value="男">男</option><option value="女">女</option></select></div>
+    <div class="form-group"><label>生日(YYYYMMDD)</label><input id="f_birthday" value="${u.birthday||''}"></div>
+    <div class="form-group"><label>身份证号</label><input id="f_idno" value="${u.idno||''}"></div>
+    <div class="form-group"><label>手机号</label><input id="f_phone" value="${u.phone||''}"></div>
+    <div class="form-group"><label>用户类型</label><select id="f_user_type"><option value="2">学生</option><option value="1">教师</option></select></div>
+    <div class="form-group"><label>学院</label><input id="f_academy_name" value="${u.academy_name||''}"></div>
+    <div class="form-group"><label>班级</label><input id="f_cls_name" value="${u.cls_name||''}"></div>
+    <div class="form-group"><label>专业</label><input id="f_major_name" value="${u.major_name||''}"></div>
+    <div class="form-group"><label>入学年份</label><input id="f_entrance_year" value="${u.entrance_year||''}"></div>
+    <div class="form-group"><label>培养层次</label><input id="f_training_level" value="${u.training_level||''}"></div>
+    <div class="form-group"><label>学校</label><input id="f_school" value="湖南软件职业技术大学"></div>
+  </div>`;
+  showModal(title, html, 'user', userNo);
+  // 如果是编辑，加载数据
+  if (userNo) {
+    api(API + `/users?keyword=${userNo}&page_size=1`).then(res => {
+      if (res.code === 1 && res.data.list.length > 0) {
+        const u = res.data.list[0];
+        for (const k in u) {
+          const el = document.getElementById('f_' + k);
+          if (el) el.value = u[k] || '';
+        }
+      }
+    }).catch(() => {});
+  }
+}
+
+function delUser(userNo) {
+  if (!confirm('确定删除该用户？相关课程和成绩也会被删除。')) return;
+  api(API + '/users/' + userNo, {method: 'DELETE'}).then(res => {
+    if (res.code === 1) { toast('删除成功'); renderUsers(); }
+    else toast(res.msg || '删除失败', 'error');
+  }).catch(() => {});
+}
+
+// ========== 课程管理 ==========
+function renderCourses() {
+  const s = pageState.courses;
+  let url = API + `/courses?page=${s.page}&page_size=15`;
+  if (s.keyword) url += '&keyword=' + encodeURIComponent(s.keyword);
+  if (s.user_no) url += '&user_no=' + encodeURIComponent(s.user_no);
+  api(url).then(res => {
+    if (res.code !== 1) return;
+    const d = res.data;
+    let html = '<div class="page-title">课程管理</div><div class="card">';
+    html += '<div class="toolbar"><div class="search-box">';
+    html += `<select id="courseUserFilter" onchange="searchCourse()"><option value="">全部学生</option>`;
+    userList.forEach(u => {
+      const sel = u.user_no === s.user_no ? 'selected' : '';
+      html += `<option value="${u.user_no}" ${sel}>${u.user_no} - ${u.name}</option>`;
+    });
+    html += '</select>';
+    html += `<input type="text" placeholder="搜索课程名/教师" value="${s.keyword}" id="courseSearch" onkeydown="if(event.key==='Enter')searchCourse()">`;
+    html += '<button class="btn btn-sm btn-default" onclick="searchCourse()">搜索</button>';
+    html += '</div><button class="btn btn-sm btn-add" onclick="openCourseModal()">+ 新增课程</button></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>ID</th><th>学生</th><th>学期</th><th>课程名</th><th>教师</th><th>周次</th><th>星期</th><th>时间</th><th>教室</th><th>操作</th></tr></thead><tbody>';
+    if (d.list.length === 0) {
+      html += '<tr><td colspan="10" class="empty">暂无数据</td></tr>';
+    } else {
+      d.list.forEach(c => {
+        const stuName = userMap[c.user_no] || '-';
+        html += `<tr><td>${c.id}</td><td>${c.user_no}<br><small style="color:#999">${stuName}</small></td><td>${c.semester_id}</td><td>${c.course_name}</td><td>${c.teacher_name||'-'}</td><td>${c.class_week||'-'}</td><td>${c.week_day||'-'}</td><td>${c.start_time||''}-${c.end_time||''}</td><td>${c.classroom_name||'-'}</td>`;
+        html += `<td><button class="btn btn-sm btn-edit" onclick="openCourseModal(${c.id})">编辑</button> <button class="btn btn-sm btn-del" onclick="delCourse(${c.id})">删除</button></td></tr>`;
+      });
+    }
+    html += '</tbody></table></div>';
+    html += renderPagination(d.total, s.page, 15, 'courses');
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(() => {});
+}
+
+function searchCourse() {
+  pageState.courses.keyword = document.getElementById('courseSearch').value.trim();
+  pageState.courses.user_no = document.getElementById('courseUserFilter').value;
+  pageState.courses.page = 1;
+  renderCourses();
+}
+
+function openCourseModal(cid=null) {
+  const title = cid ? '编辑课程' : '新增课程';
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学生 *</label><select id="f_user_no">${userSelectOptions()}</select></div>
+    <div class="form-group"><label>学期 *</label><input id="f_semester_id" placeholder="如 2026-2027-1"></div>
+    <div class="form-group"><label>课程名 *</label><input id="f_course_name"></div>
+    <div class="form-group"><label>教师</label><input id="f_teacher_name"></div>
+    <div class="form-group"><label>上课周次</label><input id="f_class_week" placeholder="如 1-16"></div>
+    <div class="form-group"><label>周次详情</label><input id="f_class_week_details" placeholder="如 ,1,2,3,"></div>
+    <div class="form-group"><label>星期几</label><select id="f_week_day"><option value="">请选择</option><option value="1">周一</option><option value="2">周二</option><option value="3">周三</option><option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="7">周日</option></select></div>
+    <div class="form-group"><label>开始时间</label><input id="f_start_time" placeholder="如 08:20"></div>
+    <div class="form-group"><label>结束时间</label><input id="f_end_time" placeholder="如 10:00"></div>
+    <div class="form-group"><label>节次编码</label><input id="f_class_time" placeholder="如 10102"></div>
+    <div class="form-group"><label>教室名称</label><input id="f_classroom_name" placeholder="如 S1-201"></div>
+    <div class="form-group"><label>教室编号</label><input id="f_classroom_nub"></div>
+    <div class="form-group"><label>教学楼</label><input id="f_building_name"></div>
+    <div class="form-group"><label>地点</label><input id="f_location"></div>
+    <div class="form-group"><label>上课班级</label><input id="f_ktmc"></div>
+    <div class="form-group"><label>考核方式</label><select id="f_khfs"><option value="考查">考查</option><option value="考试">考试</option></select></div>
+    <div class="form-group"><label>选课人数</label><input id="f_xkrs" type="number" value="0"></div>
+  </div>`;
+  showModal(title, html, 'course', cid);
+  if (cid) {
+    // 加载数据：简单起见从API获取
+    api(API + `/courses?page_size=100`).then(res => {
+      if (res.code === 1) {
+        const c = res.data.list.find(x => x.id === cid);
+        if (c) { for (const k in c) { const el = document.getElementById('f_' + k); if (el) el.value = c[k] || ''; } }
+      }
+    }).catch(() => {});
+  }
+}
+
+function delCourse(cid) {
+  if (!confirm('确定删除该课程？')) return;
+  api(API + '/courses/' + cid, {method: 'DELETE'}).then(res => {
+    if (res.code === 1) { toast('删除成功'); renderCourses(); }
+    else toast(res.msg || '删除失败', 'error');
+  }).catch(() => {});
+}
+
+// ========== 成绩管理 ==========
+function renderGrades() {
+  const s = pageState.grades;
+  let url = API + `/grades?page=${s.page}&page_size=15`;
+  if (s.keyword) url += '&keyword=' + encodeURIComponent(s.keyword);
+  if (s.semester) url += '&semester=' + encodeURIComponent(s.semester);
+  if (s.user_no) url += '&user_no=' + encodeURIComponent(s.user_no);
+  api(url).then(res => {
+    if (res.code !== 1) return;
+    const d = res.data;
+    let html = '<div class="page-title">成绩管理</div><div class="card">';
+    html += '<div class="toolbar"><div class="search-box">';
+    html += `<select id="gradeUserFilter" onchange="searchGrade()"><option value="">全部学生</option>`;
+    userList.forEach(u => {
+      const sel = u.user_no === s.user_no ? 'selected' : '';
+      html += `<option value="${u.user_no}" ${sel}>${u.user_no} - ${u.name}</option>`;
+    });
+    html += '</select>';
+    html += `<input type="text" placeholder="搜索课程名" value="${s.keyword}" id="gradeSearch" onkeydown="if(event.key==='Enter')searchGrade()">`;
+    html += `<input type="text" placeholder="学期筛选" value="${s.semester}" id="gradeSemester" style="width:140px">`;
+    html += '<button class="btn btn-sm btn-default" onclick="searchGrade()">搜索</button>';
+    html += '</div><button class="btn btn-sm btn-add" onclick="openGradeModal()">+ 新增成绩</button></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>ID</th><th>学生</th><th>课程名</th><th>学期</th><th>课程属性</th><th>考试性质</th><th>学分</th><th>成绩</th><th>操作</th></tr></thead><tbody>';
+    if (d.list.length === 0) {
+      html += '<tr><td colspan="9" class="empty">暂无数据</td></tr>';
+    } else {
+      d.list.forEach(g => {
+        const scoreColor = g.fraction >= 60 ? 'tag-green' : 'tag-orange';
+        const stuName = userMap[g.user_no] || '-';
+        html += `<tr><td>${g.id}</td><td>${g.user_no}<br><small style="color:#999">${stuName}</small></td><td>${g.course_name}</td><td>${g.cur_semester_name}</td><td>${g.curriculum_attributes||'-'}</td><td>${g.examination_nature||'-'}</td><td>${g.credit}</td><td><span class="tag ${scoreColor}">${g.fraction||'-'}</span></td>`;
+        html += `<td><button class="btn btn-sm btn-edit" onclick="openGradeModal(${g.id})">编辑</button> <button class="btn btn-sm btn-del" onclick="delGrade(${g.id})">删除</button></td></tr>`;
+      });
+    }
+    html += '</tbody></table></div>';
+    html += renderPagination(d.total, s.page, 15, 'grades');
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(() => {});
+}
+
+function searchGrade() {
+  pageState.grades.keyword = document.getElementById('gradeSearch').value.trim();
+  pageState.grades.semester = document.getElementById('gradeSemester').value.trim();
+  pageState.grades.user_no = document.getElementById('gradeUserFilter').value;
+  pageState.grades.page = 1;
+  renderGrades();
+}
+
+function openGradeModal(gid=null) {
+  const title = gid ? '编辑成绩' : '新增成绩';
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学生 *</label><select id="f_user_no">${userSelectOptions()}</select></div>
+    <div class="form-group"><label>课程名 *</label><input id="f_course_name"></div>
+    <div class="form-group"><label>学期 *</label><input id="f_cur_semester_name" placeholder="如 2023-2024-1"></div>
+    <div class="form-group"><label>课程属性</label><select id="f_curriculum_attributes"><option value="必修">必修</option><option value="选修">选修</option></select></div>
+    <div class="form-group"><label>课程性质</label><input id="f_course_nature" placeholder="如 公共必修课"></div>
+    <div class="form-group"><label>考试性质</label><select id="f_examination_nature"><option value="正常考试">正常考试</option><option value="补考一">补考一</option><option value="重修一">重修一</option></select></div>
+    <div class="form-group"><label>课程编号</label><input id="f_kcbh"></div>
+    <div class="form-group"><label>学分</label><input id="f_credit" type="number" step="0.5" value="2"></div>
+    <div class="form-group"><label>成绩</label><input id="f_fraction" placeholder="如 85"></div>
+  </div>`;
+  showModal(title, html, 'grade', gid);
+  if (gid) {
+    api(API + `/grades?page_size=100`).then(res => {
+      if (res.code === 1) {
+        const g = res.data.list.find(x => x.id === gid);
+        if (g) { for (const k in g) { const el = document.getElementById('f_' + k); if (el) el.value = g[k] || ''; } }
+      }
+    }).catch(() => {});
+  }
+}
+
+function delGrade(gid) {
+  if (!confirm('确定删除该成绩记录？')) return;
+  api(API + '/grades/' + gid, {method: 'DELETE'}).then(res => {
+    if (res.code === 1) { toast('删除成功'); renderGrades(); }
+    else toast(res.msg || '删除失败', 'error');
+  }).catch(() => {});
+}
+
+// ========== 学期管理 ==========
+function renderSemesters() {
+  api(API + '/semesters').then(res => {
+    if (res.code !== 1) return;
+    let html = '<div class="page-title">学期管理</div><div class="card">';
+    html += '<div class="toolbar"><div></div><button class="btn btn-sm btn-add" onclick="openSemesterModal()">+ 新增学期</button></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>学期ID</th><th>学期名称</th><th>是否当前学期</th><th>操作</th></tr></thead><tbody>';
+    if (res.data.length === 0) {
+      html += '<tr><td colspan="4" class="empty">暂无数据</td></tr>';
+    } else {
+      res.data.forEach(s => {
+        html += `<tr><td>${s.semester_id}</td><td>${s.semester_name}</td><td>${s.is_current==='1'?'<span class="tag tag-green">当前学期</span>':'<span class="tag tag-blue">否</span>'}</td>`;
+        html += `<td><button class="btn btn-sm btn-edit" onclick="openSemesterModal('${s.semester_id}')">编辑</button> `;
+        if (s.is_current !== '1') html += `<button class="btn btn-sm btn-default" onclick="setCurrentSemester('${s.semester_id}')">设为当前</button> `;
+        html += `<button class="btn btn-sm btn-del" onclick="delSemester('${s.semester_id}')">删除</button></td></tr>`;
+      });
+    }
+    html += '</tbody></table></div></div>';
+    document.getElementById('content').innerHTML = html;
+  }).catch(() => {});
+}
+
+function openSemesterModal(sid=null) {
+  const title = sid ? '编辑学期' : '新增学期';
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学期ID *</label><input id="f_semester_id" placeholder="如 2026-2027-1" ${sid?'readonly':''}></div>
+    <div class="form-group"><label>学期名称</label><input id="f_semester_name" placeholder="如 2026-2027-1"></div>
+    <div class="form-group"><label>是否当前学期</label><select id="f_is_current"><option value="0">否</option><option value="1">是</option></select></div>
+  </div>`;
+  showModal(title, html, 'semester', sid);
+  if (sid) {
+    api(API + '/semesters').then(res => {
+      if (res.code === 1) {
+        const s = res.data.find(x => x.semester_id === sid);
+        if (s) {
+          document.getElementById('f_semester_id').value = s.semester_id;
+          document.getElementById('f_semester_name').value = s.semester_name;
+          document.getElementById('f_is_current').value = s.is_current;
+        }
+      }
+    }).catch(() => {});
+  }
+}
+
+function setCurrentSemester(sid) {
+  api(API + '/semesters/' + sid, {
+    method: 'PUT', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({is_current: '1'})
+  }).then(res => {
+    if (res.code === 1) { toast('已设为当前学期'); renderSemesters(); }
+    else toast(res.msg || '操作失败', 'error');
+  }).catch(() => {});
+}
+
+function delSemester(sid) {
+  if (!confirm('确定删除该学期？该学期的周次也会被删除。')) return;
+  api(API + '/semesters/' + sid, {method: 'DELETE'}).then(res => {
+    if (res.code === 1) { toast('删除成功'); renderSemesters(); }
+    else toast(res.msg || '删除失败', 'error');
+  }).catch(() => {});
+}
+
+// ========== 周次管理 ==========
+let currentWeekSemester = '';
+
+function renderWeeks() {
+  let html = '<div class="page-title">周次管理</div><div class="card">';
+  html += '<div class="toolbar"><div class="search-box">';
+  html += '<span style="font-size:13px;color:#666">选择学期：</span>';
+  html += '<select id="weekSemesterSelect" onchange="changeWeekSemester()">';
+  userList.forEach(() => {}); // 占位，实际用学期列表
+  html += '</select>';
+  html += '<button class="btn btn-sm btn-default" onclick="openGenerateWeeksModal()">自动生成周次</button>';
+  html += '</div><button class="btn btn-sm btn-add" onclick="openWeekModal()">+ 新增周次</button></div>';
+  html += '<div id="weeksTableContainer"><div class="empty">请先选择学期</div></div>';
+  html += '</div>';
+  document.getElementById('content').innerHTML = html;
+
+  // 加载学期列表
+  api(API + '/semesters').then(res => {
+    if (res.code !== 1) return;
+    const select = document.getElementById('weekSemesterSelect');
+    let options = '<option value="">请选择学期</option>';
+    res.data.forEach(s => {
+      const sel = s.semester_id === currentWeekSemester ? 'selected' : '';
+      options += `<option value="${s.semester_id}" ${sel}>${s.semester_id}</option>`;
+    });
+    select.innerHTML = options;
+    // 默认选中当前学期
+    if (!currentWeekSemester) {
+      const current = res.data.find(s => s.is_current === '1');
+      if (current) {
+        currentWeekSemester = current.semester_id;
+        select.value = current.semester_id;
+        loadWeeks();
+      }
+    } else if (currentWeekSemester) {
+      loadWeeks();
+    }
+  }).catch(() => {});
+}
+
+function changeWeekSemester() {
+  currentWeekSemester = document.getElementById('weekSemesterSelect').value;
+  loadWeeks();
+}
+
+function loadWeeks() {
+  if (!currentWeekSemester) return;
+  api(API + '/weeks?semester_id=' + encodeURIComponent(currentWeekSemester)).then(res => {
+    if (res.code !== 1) return;
+    let html = '<div class="table-wrap"><table><thead><tr><th>周次</th><th>开始日期</th><th>结束日期</th><th>是否放假</th><th>备注</th><th>操作</th></tr></thead><tbody>';
+    if (res.data.length === 0) {
+      html += '<tr><td colspan="6" class="empty">暂无周次数据，点击"自动生成周次"或"新增周次"</td></tr>';
+    } else {
+      res.data.forEach(w => {
+        html += `<tr><td>第${w.week_number}周</td><td>${w.start_date||'-'}</td><td>${w.end_date||'-'}</td>`;
+        html += `<td>${w.is_holiday==='1'?'<span class="tag tag-orange">放假</span>':'<span class="tag tag-green">正常</span>'}</td>`;
+        html += `<td>${w.note||'-'}</td>`;
+        html += `<td><button class="btn btn-sm btn-edit" onclick="openWeekModal(${w.id})">编辑</button> <button class="btn btn-sm btn-del" onclick="delWeek(${w.id})">删除</button></td></tr>`;
+      });
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('weeksTableContainer').innerHTML = html;
+  }).catch(() => {});
+}
+
+function openWeekModal(wid=null) {
+  const title = wid ? '编辑周次' : '新增周次';
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学期 *</label><input id="f_semester_id" value="${currentWeekSemester}" readonly></div>
+    <div class="form-group"><label>周次 *</label><input id="f_week_number" type="number" placeholder="如 1"></div>
+    <div class="form-group"><label>开始日期</label><input id="f_start_date" type="date" placeholder="YYYY-MM-DD"></div>
+    <div class="form-group"><label>结束日期</label><input id="f_end_date" type="date" placeholder="YYYY-MM-DD"></div>
+    <div class="form-group"><label>是否放假</label><select id="f_is_holiday"><option value="0">正常教学</option><option value="1">放假/调休</option></select></div>
+    <div class="form-group"><label>备注</label><input id="f_note" placeholder="如 国庆节放假"></div>
+  </div>`;
+  showModal(title, html, 'week', wid);
+  if (wid) {
+    api(API + '/weeks?semester_id=' + encodeURIComponent(currentWeekSemester)).then(res => {
+      if (res.code === 1) {
+        const w = res.data.find(x => x.id === wid);
+        if (w) {
+          document.getElementById('f_week_number').value = w.week_number;
+          document.getElementById('f_start_date').value = w.start_date || '';
+          document.getElementById('f_end_date').value = w.end_date || '';
+          document.getElementById('f_is_holiday').value = w.is_holiday;
+          document.getElementById('f_note').value = w.note || '';
+        }
+      }
+    }).catch(() => {});
+  }
+}
+
+function delWeek(wid) {
+  if (!confirm('确定删除该周次？')) return;
+  api(API + '/weeks/' + wid, {method: 'DELETE'}).then(res => {
+    if (res.code === 1) { toast('删除成功'); loadWeeks(); }
+    else toast(res.msg || '删除失败', 'error');
+  }).catch(() => {});
+}
+
+function openGenerateWeeksModal() {
+  if (!currentWeekSemester) {
+    toast('请先选择学期', 'error');
+    return;
+  }
+  const html = `<div class="form-row">
+    <div class="form-group"><label>学期</label><input id="gen_semester_id" value="${currentWeekSemester}" readonly></div>
+    <div class="form-group"><label>开始日期（第1周周一）*</label><input id="gen_start_date" type="date"></div>
+    <div class="form-group"><label>总周数 *</label><input id="gen_total_weeks" type="number" value="20" min="1" max="30"></div>
+  </div>
+  <div style="margin-top:12px;font-size:12px;color:#999">生成后会覆盖该学期已有的周次数据。</div>`;
+  showModal('自动生成周次', html, 'generate_weeks', null);
+}
+
+// ========== 模态框保存 ==========
+function saveModal() {
+  const data = getFormData('modalBody');
+  let url, method;
+  if (modalType === 'user') {
+    if (modalEditId) { url = API + '/users/' + modalEditId; method = 'PUT'; }
+    else { url = API + '/users'; method = 'POST'; }
+  } else if (modalType === 'course') {
+    if (modalEditId) { url = API + '/courses/' + modalEditId; method = 'PUT'; }
+    else { url = API + '/courses'; method = 'POST'; }
+  } else if (modalType === 'grade') {
+    if (modalEditId) { url = API + '/grades/' + modalEditId; method = 'PUT'; }
+    else { url = API + '/grades'; method = 'POST'; }
+  } else if (modalType === 'semester') {
+    if (modalEditId) { url = API + '/semesters/' + modalEditId; method = 'PUT'; }
+    else { url = API + '/semesters'; method = 'POST'; }
+  } else if (modalType === 'week') {
+    if (modalEditId) { url = API + '/weeks/' + modalEditId; method = 'PUT'; }
+    else { url = API + '/weeks'; method = 'POST'; }
+  } else if (modalType === 'generate_weeks') {
+    url = API + '/weeks/generate';
+    method = 'POST';
+    data = {
+      semester_id: document.getElementById('gen_semester_id').value,
+      start_date: document.getElementById('gen_start_date').value,
+      total_weeks: parseInt(document.getElementById('gen_total_weeks').value) || 20
+    };
+  }
+
+  api(url, {
+    method, headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(res => {
+    if (res.code === 1) {
+      toast('保存成功');
+      closeModal();
+      switchPage(currentPage);
+    } else {
+      toast(res.msg || '保存失败', 'error');
+    }
+  }).catch(() => {});
+}
+
+// ========== 分页 ==========
+function renderPagination(total, page, pageSize, type) {
+  const totalPages = Math.ceil(total / pageSize);
+  let html = '<div class="pagination">';
+  html += `<span class="page-info">共 ${total} 条，第 ${page}/${totalPages||1} 页</span>`;
+  html += `<button onclick="goPage('${type}',${page-1})" ${page<=1?'disabled':''}>上一页</button>`;
+  html += `<button onclick="goPage('${type}',${page+1})" ${page>=totalPages?'disabled':''}>下一页</button>`;
+  html += '</div>';
+  return html;
+}
+
+function goPage(type, page) {
+  if (page < 1) return;
+  pageState[type].page = page;
+  switchPage(type);
+}
+
+// 回车登录
+document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

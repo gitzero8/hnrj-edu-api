@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+*.db
+
+# Node
+node_modules/
+
+# uni-app 构建产物（含 APK、签名证书、dist）
+unpackage/
+
+# HBuilderX IDE 配置
+.hbuilderx/
+
+# 含真实个人信息的原始接口文档（本地保留，仓库仅存脱敏版）
+湖南软件职业技术大学教务系统原生API接口文档.md
+
+# 系统/环境
+.DS_Store
+Thumbs.db
+.env
