@@ -198,10 +198,14 @@ const showWeekPicker = ref(false)
 const showExpiredModal = ref(false)
 const isCurrentWeek = ref(true)
 const nowTime = ref(Date.now())
+// 学期起始日期（由 getCurriculum('1') 返回的 date[0].mxrq 解析而来）
+const semesterStart = ref(null)
 
 let statusTimer = null
 // 标记当前登录态下是否已完成首次加载，避免 onShow 重复触发请求
 let dataLoaded = false
+// 用户是否手动切换过周次：手动切换后，学期起始日期加载完成不再覆盖其选择
+let userSelectedWeek = false
 
 function startStatusTimer() {
 	if (statusTimer) return
@@ -314,15 +318,27 @@ function parseStartSection(course) {
 	return null
 }
 
+// 解析后端返回的 "YYYY-MM-DD" 起始日期，避免 iOS 下 new Date(string) 的兼容问题
+function parseSemesterStart(mxrq) {
+	if (!mxrq) return null
+	const [y, m, d] = String(mxrq).split('-').map(Number)
+	if (!y || !m || !d) return null
+	return new Date(y, m - 1, d)
+}
+
 // 以 nowTime 为基准，使依赖它的 computed 能随定时器每分钟刷新（跨周时自动更新）
 function calcCurrentWeek() {
 	const now = new Date(nowTime.value)
-	const year = now.getFullYear()
-	let semesterStart = new Date(year, 8, 1)
-	if (now < semesterStart) {
-		semesterStart = new Date(year - 1, 8, 1)
+	let start = semesterStart.value
+	// 学期起始日期未加载时，回落到每年 9 月 1 日
+	if (!start || isNaN(start.getTime())) {
+		const year = now.getFullYear()
+		start = new Date(year, 8, 1)
+		if (now < start) {
+			start = new Date(year - 1, 8, 1)
+		}
 	}
-	const diff = Math.floor((now - semesterStart) / (7 * 24 * 60 * 60 * 1000))
+	const diff = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000))
 	return Math.max(1, Math.min(diff + 1, 20))
 }
 
@@ -375,6 +391,7 @@ function toggleCourse(course, idx) {
 }
 
 function switchWeek(w) {
+	userSelectedWeek = true
 	currentWeek.value = Number(w)
 	isCurrentWeek.value = (currentWeek.value === calcCurrentWeek())
 	expandedId.value = null
@@ -405,6 +422,19 @@ async function loadData() {
 			}
 		}
 
+		// 第 1 周课表返回的 date[0].mxrq 即学期起始日期，用于计算当前教学周
+		if (!semesterStart.value) {
+			try {
+				const startRes = await getCurriculum('1', kbjcmsid.value)
+				const firstDay = startRes.data && startRes.data[0] && startRes.data[0].date && startRes.data[0].date[0]
+				if (String(startRes.code) === '1' && firstDay) {
+					semesterStart.value = parseSemesterStart(firstDay.mxrq)
+				}
+			} catch (e) {
+				// 起始日期获取失败不影响课表展示，calcCurrentWeek 会回落到 9 月 1 日
+			}
+		}
+
 		const res = await getCurriculum('all', kbjcmsid.value)
 		if (String(res.code) === '1' && res.data && res.data.length > 0) {
 			allCourses.value = res.data[0].courses || []
@@ -420,6 +450,12 @@ async function loadData() {
 				}
 			}
 			allCourses.value = []
+		}
+
+		// 学期起始日期就绪后，若用户尚未手动切换，用真实周次刷新选中项
+		if (!userSelectedWeek) {
+			currentWeek.value = calcCurrentWeek()
+			isCurrentWeek.value = true
 		}
 	} catch (e) {
 		if (e.code === 401 || authStore.tokenExpired) {
@@ -464,6 +500,7 @@ onShow(() => {
 	} else {
 		// 未登录 / 已退出：复位状态，保证下次登录后能重新加载
 		dataLoaded = false
+		userSelectedWeek = false
 		loading.value = false
 		stopStatusTimer()
 	}
