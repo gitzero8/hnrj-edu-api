@@ -34,6 +34,13 @@
 				"navigationBarTitleText": "个人信息详情",
 				"navigationStyle": "custom"
 			}
+		},
+		{
+			"path": "pages/donate/donate",
+			"style": {
+				"navigationBarTitleText": "赞赏支持",
+				"navigationStyle": "custom"
+			}
 		}
 	],
 	"globalStyle": {

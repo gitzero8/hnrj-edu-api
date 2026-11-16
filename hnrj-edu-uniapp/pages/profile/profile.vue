@@ -48,6 +48,13 @@
 					<text class="func-name">个人信息详情</text>
 					<AppIcon name="chevron-right" :size="18" color="#CCCCCC" />
 				</view>
+				<view class="function-item" @click="goDonate">
+					<view class="func-icon func-icon-heart">
+						<AppIcon name="heart" :size="19" color="#FF6B81" />
+					</view>
+					<text class="func-name">赞赏支持</text>
+					<AppIcon name="chevron-right" :size="18" color="#CCCCCC" />
+				</view>
 				<view class="function-item" @click="showLogoutConfirm = true">
 					<view class="func-icon func-icon-red">
 						<AppIcon name="log-out" :size="19" color="#F5222D" />
@@ -128,6 +135,10 @@ function goLogin() {
 
 function goProfileDetail() {
 	uni.navigateTo({ url: '/pages/profile-detail/profile-detail' })
+}
+
+function goDonate() {
+	uni.navigateTo({ url: '/pages/donate/donate' })
 }
 
 function handleLogout() {
@@ -310,6 +321,10 @@ function handleExpired() {
 
 .func-icon-red {
 	background: rgba(245,34,45,0.1);
+}
+
+.func-icon-heart {
+	background: rgba(255,107,129,0.1);
 }
 
 .func-name {
